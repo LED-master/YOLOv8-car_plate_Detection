@@ -31,6 +31,7 @@ dataset/
 ├── image3.txt
 ├── image4.txt
 └── ...
+```
 ### Step 3: Create a data configuration file
 The data configuration file is a `.yaml` file that specifies the path, number of categories, and category names of the dataset. Here is an example `data.yaml` file:
 ```yaml
