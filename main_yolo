@@ -1,0 +1,125 @@
+from ultralytics import YOLO
+import cv2
+import os
+
+
+def resize_image(image):
+    """
+    将图片调整到640x640大小
+    :param image: 输入的图片（numpy数组）
+    :return: 调整大小后的图片
+    """
+    height, width = image.shape[:2]
+    if height != 640 or width != 640:
+        image = cv2.resize(image, (640, 640))
+    return image
+
+
+def resize_video_frame(frame):
+    """
+    将视频帧调整到640x640大小
+    :param frame: 输入的视频帧（numpy数组）
+    :return: 调整大小后的视频帧
+    """
+    return resize_image(frame)
+
+
+def detect_plates_on_image(model, image_path, output_folder):
+    print(f"开始处理图片: {image_path}")
+    # 1. 检查输入图片是否存在
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"错误：图片路径不存在 - {image_path}")
+
+    print("读取图片...")
+    # 2. 读取图片（OpenCV默认BGR格式，YOLO内部会自动处理）
+    image = cv2.imread(image_path)
+
+    print("调整图片大小...")
+    # 3. 调整图片大小到640x640
+    image = resize_image(image)
+
+    print("执行检测...")
+    # 4. 执行检测（返回Results对象列表）
+    results = model(image)  # 此处自动使用模型训练时的参数（如imgsz、device等）
+
+    print("绘制检测框...")
+    # 5. 获取带检测框的图片（BGR格式，numpy数组）
+    annotated_image = results[0].plot()  # results[0]对应单张图片的检测结果
+
+    print("保存结果...")
+    # 6. 保存结果（自动创建输出目录）
+    os.makedirs(output_folder, exist_ok=True)
+    image_name = os.path.basename(image_path)  # 从路径中提取文件名
+    output_path = os.path.join(output_folder, image_name)
+    cv2.imwrite(output_path, annotated_image)
+    print(f"✅ 图片检测完成并保存至：{output_path}")
+
+
+def detect_plates_on_video(model, video_path, output_path):
+    """
+    检测视频中的车牌并保存结果视频
+    :param model: 训练好的YOLOv8模型（已加载状态）
+    :param video_path: 待检测视频的完整路径（例如："F:/videos/car_video.mp4"）
+    :param output_path: 检测结果视频保存路径（例如："F:/output/output_video.mp4"）
+    """
+    # 1. 检查输入视频是否存在
+    if not os.path.exists(video_path):
+        raise FileNotFoundError(f"错误：视频路径不存在 - {video_path}")
+
+    # 2. 初始化视频读取与写入对象
+    cap = cv2.VideoCapture(video_path)
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # 定义视频编码格式（MP4）
+
+    # 3. 调整输出视频的分辨率为640x640
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    out = cv2.VideoWriter(output_path, fourcc, fps, (640, 640))
+
+    # 4. 逐帧检测处理
+    frame_count = 0
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:  # 读取到视频末尾或出错
+            break
+
+        # 调整视频帧大小到640x640
+        frame = resize_video_frame(frame)
+
+        # 执行检测并绘制检测框
+        results = model(frame)
+        annotated_frame = results[0].plot()  # 单帧检测结果
+
+        # 写入视频帧
+        out.write(annotated_frame)
+        frame_count += 1
+        print(f"处理中... 已处理帧：{frame_count}", end="\r")  # 进度提示
+
+    # 5. 释放资源
+    cap.release()
+    out.release()
+    print(f"\n✅ 视频检测完成并保存至：{output_path}")
+
+
+if __name__ == "__main__":
+    # 配置区域
+    MODEL_PATH = "\runs\detect\train4\weights\best.pt"  # 训练好的模型路径（需根据实际保存路径修改）
+    INPUT_PATH = input("\Desktop\0375-92_263-192&480_552&575-536&575_198&560_192&480_552&495-0_0_5_24_29_33_24_24-133-69.jpg")
+    OUTPUT_DIR = input("\learn\YOLOV8\results")
+
+    # 加载模型
+    model = YOLO(MODEL_PATH)
+
+    # 获取文件扩展名
+    file_extension = os.path.splitext(INPUT_PATH)[1].lower()
+
+    # 定义图片和视频的常见扩展名
+    image_extensions = ['.jpg', '.jpeg', '.png', '.bmp']
+    video_extensions = ['.mp4', '.avi', '.mov']
+
+    if file_extension in image_extensions:
+        detect_plates_on_image(model, INPUT_PATH, OUTPUT_DIR)
+    elif file_extension in video_extensions:
+        output_video_path = os.path.join(OUTPUT_DIR, "output_video.mp4")
+        detect_plates_on_video(model, INPUT_PATH, output_video_path)
+    else:
+        print(f"不支持的文件类型：{file_extension}，请提供图片或视频文件。")
+
