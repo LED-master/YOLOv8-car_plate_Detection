@@ -1,0 +1,6 @@
+```yaml
+train: path/to/dataset/images/train
+val: path/to/dataset/images/val
+
+nc: 1 # Number of categories, here is the license plate, so it is 1
+names: ['license_plate'] # Category name
