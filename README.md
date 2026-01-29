@@ -15,7 +15,7 @@
 ---
 
 ## 📸 效果演示 (Demo)
-> *[注：请在项目目录下创建 `docs/` 文件夹并放入一张识别成功的图片，命名为 `result.jpg`]*
+
 ![检测结果演示](./docs/result.jpg)
 
 ---
@@ -28,7 +28,7 @@ bash
 克隆项目
 git clone [https://github.com/LED-master/YOLOv8-car_plate_Detection.git](https://github.com/LED-master/YOLOv8-car_plate_Detection.git)
 cd YOLOv8-car_plate_Detection
-🚀 使用说明 (Usage)
+#🚀 使用说明 (Usage)
 1. 模型预测 (Inference)
 你可以直接使用训练好的权重进行推理：
 
@@ -64,7 +64,7 @@ yolo export model=best.pt format=onnx  # 导出为 ONNX 格式
 [ ] 软硬件协同：通过串口（Serial）将检测结果发送至 STM32，实现道闸模拟控制。
 
 📧 联系方式 (Contact)
-Author: 赵中豪 (Zhonghao Zhao)
+Author: Zhonghao Zhao
 
 Email: nbzhonghao@outlook.com
 
